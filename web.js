@@ -33,6 +33,40 @@ app.get('/orders', function(request, response) {
   });
 });
 
+// Render /recargar
+app.get('/recargar', function(request, response) {
+  console.log("Procesando cuenta " + request.query.san);
+
+    var Weblog = global.db.Weblog;
+
+    // find if SAN has already been added to our database
+    Weblog.find({where: {san: request.query.san, done: false, fail: false}}).success(function(weblogRecord) {
+      if (weblogRecord) {
+        // order already exists, do nothing
+	  console.log("Cuenta " + request.query.san + " ya existe en DB");
+	  response.send("La cuenta " + request.query.san + " ya existe en la cola de recargas. Por favor espere.");  
+        //callback();
+      } else {
+        // build record and save
+          var new_Record = Weblog.build({san: request.query.san, done:false, fail:false});
+          new_Record.save().success(function(record) {
+	  //callback();
+	      console.log("Registro " + record.san + " agregado a DB");
+	      response.send("Su cuenta sera recargada en unos minutos, Por favor espere.");
+        }).error(function(err) {
+          //callback(err);
+	    console.log(err);
+	    responde.send("Error al registrar su cuenta");
+        });
+      }
+    });
+
+
+//  global.db.Weblog.find({where: {san: request.query.san}}).success(function(cuenta) {
+
+});
+
+
 // Hit this URL while on example.com/orders to refresh
 app.get('/refresh_orders', function(request, response) {
   https.get("https://coinbase.com/api/v1/orders?api_key=" + process.env.COINBASE_API_KEY, function(res) {
